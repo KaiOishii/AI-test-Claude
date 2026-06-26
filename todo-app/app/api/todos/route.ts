@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { randomUUID } from 'crypto'
-import db from '@/lib/db'
+import sql from '@/lib/db'
 import { getSession } from '@/lib/auth'
 import type { Todo } from '@/lib/types'
 
@@ -8,21 +8,21 @@ export async function GET() {
   const session = await getSession()
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const rows = db.prepare(`
+  const rows = await sql`
     SELECT t.*, c.name as category_name
     FROM todos t
     LEFT JOIN categories c ON t.category_id = c.id
-    WHERE t.user_id = ? AND t.parent_id IS NULL
+    WHERE t.user_id = ${session.userId} AND t.parent_id IS NULL
     ORDER BY t.sort_order ASC, t.created_at DESC
-  `).all(session.userId) as Todo[]
+  ` as Todo[]
 
-  const subtaskRows = db.prepare(`
+  const subtaskRows = await sql`
     SELECT t.*, c.name as category_name
     FROM todos t
     LEFT JOIN categories c ON t.category_id = c.id
-    WHERE t.user_id = ? AND t.parent_id IS NOT NULL
+    WHERE t.user_id = ${session.userId} AND t.parent_id IS NOT NULL
     ORDER BY t.sort_order ASC, t.created_at ASC
-  `).all(session.userId) as Todo[]
+  ` as Todo[]
 
   const todos = rows.map(t => ({
     ...t,
@@ -43,16 +43,14 @@ export async function POST(req: NextRequest) {
   if (!title) return NextResponse.json({ error: 'タイトルを入力してください' }, { status: 400 })
 
   const id = randomUUID()
-  db.prepare(`
+  const [todo] = await sql`
     INSERT INTO todos (id, title, memo, user_id, category_id, due_date, priority, recurring, sort_order, parent_id)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-  `).run(
-    id, title, memo || null, session.userId,
-    category_id || null, due_date || null,
-    priority || 'none', recurring || 'none',
-    sort_order ?? 0, parent_id || null
-  )
+    VALUES (${id}, ${title}, ${memo || null}, ${session.userId},
+      ${category_id || null}, ${due_date || null},
+      ${priority || 'none'}, ${recurring || 'none'},
+      ${sort_order ?? 0}, ${parent_id || null})
+    RETURNING *
+  ` as Todo[]
 
-  const todo = db.prepare('SELECT * FROM todos WHERE id = ?').get(id) as Todo
   return NextResponse.json({ ...todo, completed: !!todo.completed }, { status: 201 })
 }

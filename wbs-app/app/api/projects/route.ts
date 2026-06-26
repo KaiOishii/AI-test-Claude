@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { randomUUID } from 'crypto'
-import db from '@/lib/db'
+import sql from '@/lib/db'
 import { getSession } from '@/lib/auth'
 import type { Project } from '@/lib/types'
 
@@ -8,7 +8,7 @@ export async function GET() {
   const session = await getSession()
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const projects = db.prepare(`
+  const projects = await sql`
     SELECT p.*,
       COUNT(t.id) as task_count,
       SUM(CASE WHEN t.status = 'completed' THEN 1 ELSE 0 END) as completed_task_count,
@@ -16,10 +16,10 @@ export async function GET() {
       COALESCE(SUM(t.actual_hours), 0) as total_actual_hours
     FROM projects p
     LEFT JOIN tasks t ON t.project_id = p.id AND t.user_id = p.user_id
-    WHERE p.user_id = ?
+    WHERE p.user_id = ${session.userId}
     GROUP BY p.id
     ORDER BY p.updated_at DESC
-  `).all(session.userId) as Project[]
+  ` as Project[]
 
   return NextResponse.json(projects)
 }
@@ -32,11 +32,13 @@ export async function POST(req: NextRequest) {
   if (!name) return NextResponse.json({ error: 'プロジェクト名を入力してください' }, { status: 400 })
 
   const id = randomUUID()
-  db.prepare(`
-    INSERT INTO projects (id, user_id, name, description, start_date, due_date, status)
-    VALUES (?, ?, ?, ?, ?, ?, ?)
-  `).run(id, session.userId, name, description || null, start_date || null, due_date || null, status || 'active')
+  const now = new Date().toISOString()
+  const [project] = await sql`
+    INSERT INTO projects (id, user_id, name, description, start_date, due_date, status, created_at, updated_at)
+    VALUES (${id}, ${session.userId}, ${name}, ${description || null},
+            ${start_date || null}, ${due_date || null}, ${status || 'active'}, ${now}, ${now})
+    RETURNING *
+  ` as Project[]
 
-  const project = db.prepare('SELECT * FROM projects WHERE id = ?').get(id) as Project
   return NextResponse.json(project, { status: 201 })
 }

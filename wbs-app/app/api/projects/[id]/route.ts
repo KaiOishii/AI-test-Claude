@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import db from '@/lib/db'
+import sql from '@/lib/db'
 import { getSession } from '@/lib/auth'
 import type { Project } from '@/lib/types'
 
@@ -8,7 +8,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const { id } = await params
-  const project = db.prepare(`
+  const rows = await sql`
     SELECT p.*,
       COUNT(t.id) as task_count,
       SUM(CASE WHEN t.status = 'completed' THEN 1 ELSE 0 END) as completed_task_count,
@@ -16,12 +16,12 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
       COALESCE(SUM(t.actual_hours), 0) as total_actual_hours
     FROM projects p
     LEFT JOIN tasks t ON t.project_id = p.id AND t.user_id = p.user_id
-    WHERE p.id = ? AND p.user_id = ?
+    WHERE p.id = ${id} AND p.user_id = ${session.userId}
     GROUP BY p.id
-  `).get(id, session.userId) as Project | undefined
+  ` as Project[]
 
-  if (!project) return NextResponse.json({ error: 'Not found' }, { status: 404 })
-  return NextResponse.json(project)
+  if (rows.length === 0) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+  return NextResponse.json(rows[0])
 }
 
 export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -29,26 +29,34 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const { id } = await params
-  const { name, description, start_date, due_date, status, progress } = await req.json()
+  const existing = await sql`SELECT * FROM projects WHERE id = ${id} AND user_id = ${session.userId}`
+  const project = existing[0] as Project | undefined
+  if (!project) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
-  db.prepare(`
+  const body = await req.json()
+  const now = new Date().toISOString()
+  const patch = {
+    name:        body.name        !== undefined ? body.name                  : project.name,
+    description: body.description !== undefined ? (body.description || null) : project.description,
+    start_date:  body.start_date  !== undefined ? (body.start_date || null)  : project.start_date,
+    due_date:    body.due_date    !== undefined ? (body.due_date || null)    : project.due_date,
+    status:      body.status      !== undefined ? body.status                : project.status,
+    progress:    body.progress    !== undefined ? body.progress              : project.progress,
+  }
+
+  const [updated] = await sql`
     UPDATE projects SET
-      name = COALESCE(?, name),
-      description = COALESCE(?, description),
-      start_date = COALESCE(?, start_date),
-      due_date = COALESCE(?, due_date),
-      status = COALESCE(?, status),
-      progress = COALESCE(?, progress),
-      updated_at = datetime('now')
-    WHERE id = ? AND user_id = ?
-  `).run(
-    name ?? null, description !== undefined ? (description || null) : null,
-    start_date !== undefined ? (start_date || null) : null,
-    due_date !== undefined ? (due_date || null) : null,
-    status ?? null, progress ?? null, id, session.userId
-  )
+      name        = ${patch.name},
+      description = ${patch.description},
+      start_date  = ${patch.start_date},
+      due_date    = ${patch.due_date},
+      status      = ${patch.status},
+      progress    = ${patch.progress},
+      updated_at  = ${now}
+    WHERE id = ${id} AND user_id = ${session.userId}
+    RETURNING *
+  ` as Project[]
 
-  const updated = db.prepare('SELECT * FROM projects WHERE id = ?').get(id) as Project
   return NextResponse.json(updated)
 }
 
@@ -57,8 +65,8 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const { id } = await params
-  const result = db.prepare('DELETE FROM projects WHERE id = ? AND user_id = ?').run(id, session.userId)
-  if (result.changes === 0) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+  const deleted = await sql`DELETE FROM projects WHERE id = ${id} AND user_id = ${session.userId} RETURNING id`
+  if (deleted.length === 0) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
   return NextResponse.json({ ok: true })
 }

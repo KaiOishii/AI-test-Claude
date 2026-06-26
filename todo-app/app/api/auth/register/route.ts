@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { hash } from 'bcryptjs'
 import { randomUUID } from 'crypto'
-import db from '@/lib/db'
+import sql from '@/lib/db'
 import { createToken } from '@/lib/auth'
 
 export async function POST(req: NextRequest) {
@@ -11,14 +11,14 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: '全ての項目を入力してください' }, { status: 400 })
   }
 
-  const existing = db.prepare('SELECT id FROM users WHERE email = ?').get(email)
-  if (existing) {
+  const existing = await sql`SELECT id FROM users WHERE email = ${email}`
+  if (existing.length > 0) {
     return NextResponse.json({ error: 'このメールアドレスは既に使用されています' }, { status: 409 })
   }
 
   const hashed = await hash(password, 10)
   const id = randomUUID()
-  db.prepare('INSERT INTO users (id, email, password, name) VALUES (?, ?, ?, ?)').run(id, email, hashed, name)
+  await sql`INSERT INTO users (id, email, password, name) VALUES (${id}, ${email}, ${hashed}, ${name})`
 
   const token = await createToken(id)
   const res = NextResponse.json({ success: true })

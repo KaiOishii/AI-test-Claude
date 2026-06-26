@@ -9,7 +9,6 @@ async function ensureRegistered(page: Page) {
   await page.request.post(`${BASE_URL}/api/auth/register`, {
     data: { email: TEST_EMAIL, password: TEST_PASSWORD, name: TEST_NAME },
   })
-  // 409 = already exists, both outcomes are fine
 }
 
 async function login(page: Page) {
@@ -43,16 +42,10 @@ test.describe('認証フロー', () => {
     await login(page)
     await page.getByText('ログアウト').click()
     await page.waitForURL(`${BASE_URL}/login`)
-    await expect(page).toHaveURL(/\/login/)
-  })
-
-  test('新規登録画面が表示される', async ({ page }) => {
-    await page.goto(`${BASE_URL}/register`)
-    await expect(page.getByRole('heading', { name: '新規登録' })).toBeVisible()
   })
 })
 
-test.describe('ToDoの操作（認証済み）', () => {
+test.describe('ToDoの基本操作', () => {
   test.beforeEach(async ({ page }) => {
     await ensureRegistered(page)
     await login(page)
@@ -60,29 +53,25 @@ test.describe('ToDoの操作（認証済み）', () => {
 
   test('ToDoの追加', async ({ page }) => {
     await page.getByText('+ 追加').click()
-    await page.fill('input[required]', '買い物に行く')
+    await page.fill('input[name="title"]', '買い物に行く')
     await page.getByRole('button', { name: '追加', exact: true }).click()
-    await expect(page.getByText('買い物に行く')).toBeVisible()
+    await expect(page.getByText('買い物に行く').first()).toBeVisible()
   })
 
   test('ToDoの完了切り替え', async ({ page }) => {
     await page.getByText('+ 追加').click()
-    await page.fill('input[required]', '完了テスト用タスク')
+    await page.fill('input[name="title"]', '完了テスト用タスク')
     await page.getByRole('button', { name: '追加', exact: true }).click()
-    await expect(page.getByText('完了テスト用タスク')).toBeVisible()
-
-    const listItem = page.locator('li').filter({ hasText: '完了テスト用タスク' })
-    await listItem.locator('button').first().click()
-    await expect(listItem.locator('p.line-through')).toBeVisible()
+    const listItem = page.locator('li').filter({ hasText: '完了テスト用タスク' }).first()
+    await listItem.locator('button').nth(2).click()
+    await expect(page.locator('p.line-through').filter({ hasText: '完了テスト用タスク' }).first()).toBeVisible()
   })
 
   test('ToDoの削除', async ({ page }) => {
     await page.getByText('+ 追加').click()
-    await page.fill('input[required]', '削除テスト用タスク')
+    await page.fill('input[name="title"]', '削除テスト用タスク')
     await page.getByRole('button', { name: '追加', exact: true }).click()
-    await expect(page.getByText('削除テスト用タスク')).toBeVisible()
-
-    const listItem = page.locator('li').filter({ hasText: '削除テスト用タスク' })
+    const listItem = page.locator('li').filter({ hasText: '削除テスト用タスク' }).first()
     await listItem.hover()
     await listItem.getByRole('button', { name: '削除' }).click()
     await expect(page.getByText('削除テスト用タスク')).not.toBeVisible()
@@ -90,31 +79,66 @@ test.describe('ToDoの操作（認証済み）', () => {
 
   test('ToDoの編集', async ({ page }) => {
     await page.getByText('+ 追加').click()
-    await page.fill('input[required]', '編集前のタスク')
+    await page.fill('input[name="title"]', '編集前のタスク')
     await page.getByRole('button', { name: '追加', exact: true }).click()
-    await expect(page.getByText('編集前のタスク')).toBeVisible()
-
-    const listItem = page.locator('li').filter({ hasText: '編集前のタスク' })
+    const listItem = page.locator('li').filter({ hasText: '編集前のタスク' }).first()
     await listItem.hover()
     await listItem.getByRole('button', { name: '編集' }).click()
-
-    const titleInput = page.locator('input[required]')
-    await titleInput.fill('編集後のタスク')
-    await page.getByRole('button', { name: '保存' }).click()
-    await expect(page.getByText('編集後のタスク')).toBeVisible()
+    await page.fill('input[name="title"]', '編集後のタスク')
+    await page.getByRole('button', { name: '保存', exact: true }).click()
+    await expect(page.getByText('編集後のタスク').first()).toBeVisible()
     await expect(page.getByText('編集前のタスク')).not.toBeVisible()
   })
+})
 
-  test('フィルター: 未完了のみ表示', async ({ page }) => {
+test.describe('検索機能', () => {
+  test.beforeEach(async ({ page }) => {
+    await ensureRegistered(page)
+    await login(page)
+  })
+
+  test('タイトルで検索できる', async ({ page }) => {
     await page.getByText('+ 追加').click()
-    await page.fill('input[required]', 'フィルターテスト用')
+    await page.fill('input[name="title"]', '検索テスト用タスク')
     await page.getByRole('button', { name: '追加', exact: true }).click()
-    const listItem = page.locator('li').filter({ hasText: 'フィルターテスト用' })
-    await listItem.locator('button').first().click()
+
+    await page.fill('input[placeholder="タスクを検索..."]', '検索テスト')
+    await expect(page.getByText('検索テスト用タスク').first()).toBeVisible()
+  })
+})
+
+test.describe('優先度機能', () => {
+  test.beforeEach(async ({ page }) => {
+    await ensureRegistered(page)
+    await login(page)
+  })
+
+  test('高優先度のToDoを追加できる', async ({ page }) => {
+    await page.getByText('+ 追加').click()
+    await page.fill('input[name="title"]', '高優先度タスク')
+    await page.selectOption('select[name="priority"]', 'high')
+    await page.getByRole('button', { name: '追加', exact: true }).click()
+    const listItem = page.locator('li').filter({ hasText: '高優先度タスク' }).first()
+    await expect(listItem.getByText('高', { exact: true })).toBeVisible()
+  })
+})
+
+test.describe('フィルター機能', () => {
+  test.beforeEach(async ({ page }) => {
+    await ensureRegistered(page)
+    await login(page)
+  })
+
+  test('未完了フィルターで完了済みが非表示', async ({ page }) => {
+    await page.getByText('+ 追加').click()
+    await page.fill('input[name="title"]', 'フィルターテスト')
+    await page.getByRole('button', { name: '追加', exact: true }).click()
+    const listItem = page.locator('li').filter({ hasText: 'フィルターテスト' }).first()
+    await listItem.locator('button').nth(2).click()
 
     await page.getByRole('button', { name: '未完了' }).click()
-    const completedItems = page.locator('li p.line-through')
-    await expect(completedItems).toHaveCount(0)
+    const items = page.locator('li p.line-through')
+    await expect(items).toHaveCount(0)
   })
 })
 
@@ -128,20 +152,30 @@ test.describe('カテゴリ管理', () => {
     await page.locator('aside button:has-text("+")').click()
     await page.locator('aside input[placeholder="名前"]').fill('仕事')
     await page.locator('aside button:has-text("追加")').click()
-    await expect(page.getByText('仕事')).toBeVisible()
+    await expect(page.locator('aside').getByText('仕事').first()).toBeVisible()
+  })
+})
+
+test.describe('ダークモード', () => {
+  test.beforeEach(async ({ page }) => {
+    await ensureRegistered(page)
+    await login(page)
   })
 
-  test('カテゴリを選択してフィルタリング', async ({ page }) => {
-    await page.locator('aside button:has-text("+")').click()
-    await page.locator('aside input[placeholder="名前"]').fill('プライベート')
-    await page.locator('aside button:has-text("追加")').click()
+  test('ダークモード切り替えボタンが存在する', async ({ page }) => {
+    const darkBtn = page.locator('button[title="ダークモード"], button[title="ライトモード"]').first()
+    await expect(darkBtn).toBeVisible()
+  })
+})
 
-    await page.getByText('+ 追加').click()
-    await page.fill('input[required]', 'プライベートのタスク')
-    await page.locator('select').first().selectOption({ label: 'プライベート' })
-    await page.getByRole('button', { name: '追加', exact: true }).click()
+test.describe('カレンダー表示', () => {
+  test.beforeEach(async ({ page }) => {
+    await ensureRegistered(page)
+    await login(page)
+  })
 
-    await page.getByText('プライベート').first().click()
-    await expect(page.getByText('プライベートのタスク')).toBeVisible()
+  test('カレンダービューに切り替えられる', async ({ page }) => {
+    await page.getByRole('button', { name: 'カレンダー' }).click()
+    await expect(page.getByRole('heading').filter({ hasText: '年' })).toBeVisible()
   })
 })

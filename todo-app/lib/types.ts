@@ -12,6 +12,9 @@ export interface Category {
   created_at: string
 }
 
+export type Priority = 'none' | 'low' | 'medium' | 'high'
+export type Recurring = 'none' | 'daily' | 'weekly' | 'monthly'
+
 export interface Todo {
   id: string
   title: string
@@ -20,7 +23,12 @@ export interface Todo {
   user_id: string
   category_id: string | null
   due_date: string | null
+  priority: Priority
+  recurring: Recurring
+  sort_order: number
+  parent_id: string | null
   created_at: string
   updated_at: string
-  category?: Category
+  category_name?: string
+  subtasks?: Todo[]
 }

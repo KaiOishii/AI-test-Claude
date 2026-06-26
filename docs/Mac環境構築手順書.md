@@ -168,7 +168,7 @@ ls AI-test-Claude
 以下のファイルが表示されれば成功です：
 
 ```
-README.md  todo-app  wbs-app  手順書.md  ...
+README.md  app  docs  lib  package.json  インストーラー  ...
 ```
 
 ---
@@ -177,7 +177,7 @@ README.md  todo-app  wbs-app  手順書.md  ...
 
 これで準備は完了です。
 
-次は **「【Mac】アプリ起動手順書.md」** に進んでください。
+次は **`docs/アプリ起動手順書.md`** に進んでください。
 
 ---
 

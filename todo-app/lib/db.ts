@@ -39,4 +39,11 @@ db.exec(`
   );
 `)
 
+// Migrations: add new columns if they don't exist
+const cols = (db.prepare('PRAGMA table_info(todos)').all() as { name: string }[]).map(c => c.name)
+if (!cols.includes('priority'))   db.exec("ALTER TABLE todos ADD COLUMN priority TEXT NOT NULL DEFAULT 'none'")
+if (!cols.includes('recurring'))  db.exec("ALTER TABLE todos ADD COLUMN recurring TEXT NOT NULL DEFAULT 'none'")
+if (!cols.includes('sort_order')) db.exec("ALTER TABLE todos ADD COLUMN sort_order INTEGER NOT NULL DEFAULT 0")
+if (!cols.includes('parent_id'))  db.exec('ALTER TABLE todos ADD COLUMN parent_id TEXT')
+
 export default db

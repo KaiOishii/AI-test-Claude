@@ -1,0 +1,36 @@
+# Dependencies
+/node_modules
+/todo-app/node_modules
+/wbs-app/node_modules
+
+# Next.js
+/.next
+/out
+/todo-app/.next
+/wbs-app/.next
+
+# Environment
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+!.env.example
+
+# Database
+/.data
+/todo-app/.data
+/wbs-app/.data
+
+# Testing
+/test-results
+/playwright-report
+/todo-app/test-results
+/todo-app/playwright-report
+
+# Misc
+.DS_Store
+*.pem
+/npm-debug.log*
+/yarn-debug.log*
+/yarn-error.log*

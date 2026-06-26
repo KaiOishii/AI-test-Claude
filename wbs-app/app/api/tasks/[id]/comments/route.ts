@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { randomUUID } from 'crypto'
-import db from '@/lib/db'
+import sql from '@/lib/db'
 import { getSession } from '@/lib/auth'
 import type { TaskComment } from '@/lib/types'
 
@@ -9,12 +9,12 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const { id } = await params
-  const comments = db.prepare(`
+  const comments = await sql`
     SELECT c.*, u.name as user_name FROM task_comments c
     JOIN users u ON c.user_id = u.id
-    WHERE c.task_id = ?
+    WHERE c.task_id = ${id}
     ORDER BY c.created_at ASC
-  `).all(id) as TaskComment[]
+  ` as TaskComment[]
 
   return NextResponse.json(comments)
 }
@@ -28,14 +28,16 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   if (!body) return NextResponse.json({ error: 'コメントを入力してください' }, { status: 400 })
 
   const commentId = randomUUID()
-  db.prepare('INSERT INTO task_comments (id, task_id, user_id, body) VALUES (?, ?, ?, ?)').run(
-    commentId, id, session.userId, body
-  )
+  const [comment] = await sql`
+    INSERT INTO task_comments (id, task_id, user_id, body)
+    VALUES (${commentId}, ${id}, ${session.userId}, ${body})
+    RETURNING *
+  ` as TaskComment[]
 
-  const comment = db.prepare(`
+  const [withUser] = await sql`
     SELECT c.*, u.name as user_name FROM task_comments c
-    JOIN users u ON c.user_id = u.id WHERE c.id = ?
-  `).get(commentId) as TaskComment
+    JOIN users u ON c.user_id = u.id WHERE c.id = ${comment.id}
+  ` as TaskComment[]
 
-  return NextResponse.json(comment, { status: 201 })
+  return NextResponse.json(withUser, { status: 201 })
 }

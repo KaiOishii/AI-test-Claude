@@ -1,13 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 import bcrypt from 'bcryptjs'
 import { cookies } from 'next/headers'
-import db from '@/lib/db'
+import sql from '@/lib/db'
 import { createToken, COOKIE } from '@/lib/auth'
 import type { User } from '@/lib/types'
 
 export async function POST(req: NextRequest) {
   const { email, password } = await req.json()
-  const user = db.prepare('SELECT * FROM users WHERE email = ?').get(email) as User & { password: string } | undefined
+  const rows = await sql`SELECT * FROM users WHERE email = ${email}`
+  const user = rows[0] as (User & { password: string }) | undefined
   if (!user || !(await bcrypt.compare(password, user.password))) {
     return NextResponse.json({ error: 'メールアドレスまたはパスワードが正しくありません' }, { status: 401 })
   }

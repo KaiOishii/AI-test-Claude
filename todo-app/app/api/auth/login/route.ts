@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { compare } from 'bcryptjs'
-import db from '@/lib/db'
+import sql from '@/lib/db'
 import { createToken } from '@/lib/auth'
 
 export async function POST(req: NextRequest) {
@@ -10,7 +10,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'メールアドレスとパスワードを入力してください' }, { status: 400 })
   }
 
-  const user = db.prepare('SELECT * FROM users WHERE email = ?').get(email) as { id: string; password: string } | undefined
+  const users = await sql`SELECT id, password FROM users WHERE email = ${email}`
+  const user = users[0] as { id: string; password: string } | undefined
   if (!user) {
     return NextResponse.json({ error: 'メールアドレスまたはパスワードが正しくありません' }, { status: 401 })
   }

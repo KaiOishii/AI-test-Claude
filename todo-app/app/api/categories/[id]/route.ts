@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import db from '@/lib/db'
+import sql from '@/lib/db'
 import { getSession } from '@/lib/auth'
 
 export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -10,11 +10,13 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
   const { name } = await req.json()
   if (!name) return NextResponse.json({ error: 'カテゴリ名を入力してください' }, { status: 400 })
 
-  const result = db.prepare('UPDATE categories SET name = ? WHERE id = ? AND user_id = ?').run(name, id, session.userId)
-  if (result.changes === 0) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+  const updated = await sql`
+    UPDATE categories SET name = ${name} WHERE id = ${id} AND user_id = ${session.userId}
+    RETURNING *
+  `
+  if (updated.length === 0) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
-  const updated = db.prepare('SELECT * FROM categories WHERE id = ?').get(id)
-  return NextResponse.json(updated)
+  return NextResponse.json(updated[0])
 }
 
 export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -22,8 +24,8 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const { id } = await params
-  const result = db.prepare('DELETE FROM categories WHERE id = ? AND user_id = ?').run(id, session.userId)
-  if (result.changes === 0) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+  const deleted = await sql`DELETE FROM categories WHERE id = ${id} AND user_id = ${session.userId} RETURNING id`
+  if (deleted.length === 0) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
   return NextResponse.json({ success: true })
 }

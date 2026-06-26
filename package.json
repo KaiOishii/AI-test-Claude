@@ -1,11 +1,12 @@
 {
-  "name": "todo-app",
-  "version": "0.1.0",
+  "name": "task-manager",
+  "version": "1.0.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start"
+    "start": "next start",
+    "test": "npx playwright test --reporter=list"
   },
   "dependencies": {
     "@types/bcryptjs": "^2.4.6",

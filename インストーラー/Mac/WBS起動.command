@@ -1,21 +1,19 @@
 #!/bin/bash
 # WBS管理を起動します（Mac用）
-cd "$(dirname "$0")"
-ROOT="$(cd ../.. && pwd)"
-cd "$ROOT/wbs-app" || exit 1
+cd "$(dirname "$0")/../.."
 
-echo "🚀 WBS管理を起動します..."
+echo "🚀 WBS 管理を起動します..."
 
 if [ ! -d node_modules ]; then
   echo "📦 初回のみパッケージをインストールします..."
   npm install
 fi
 
-# WBSは3001番ポートで起動（ToDoと同時に動かせるように）
-( sleep 5 && open http://localhost:3001 ) &
+# 5秒後にブラウザを開く（サーバー起動待ち）
+( sleep 5 && open http://localhost:3000/dashboard ) &
 
 echo ""
-echo "ブラウザで http://localhost:3001 が開きます。"
+echo "ブラウザで http://localhost:3000/dashboard が開きます。"
 echo "止めたいときは Control + C を押してください。"
 echo ""
-npx next dev -p 3001
+npm run dev

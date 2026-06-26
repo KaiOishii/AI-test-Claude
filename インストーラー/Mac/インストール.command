@@ -1,14 +1,12 @@
 #!/bin/bash
 # ============================================
-#  Mac用 インストーラー
-#  ToDo / WBS から選んでインストールできます
+#  Mac用 インストーラー（統合アプリ）
 # ============================================
-cd "$(dirname "$0")"
-ROOT="$(cd ../.. && pwd)"
+cd "$(dirname "$0")/../.."
 
 clear
 echo "==========================================="
-echo "   アプリ インストーラー（Mac用）"
+echo "   タスク管理アプリ インストーラー（Mac用）"
 echo "==========================================="
 echo ""
 
@@ -16,7 +14,7 @@ echo ""
 if ! command -v node >/dev/null 2>&1; then
   echo "❌ Node.js が見つかりません。"
   echo ""
-  echo "先に「【Mac】環境構築手順書.md」を見て"
+  echo "先に「docs/Mac環境構築手順書.md」を見て"
   echo "Node.js をインストールしてください。"
   echo ""
   read -p "Enterキーで閉じます..."
@@ -25,39 +23,21 @@ fi
 echo "✅ Node.js: $(node -v)"
 echo ""
 
-# インストール対象を選択
-echo "どのアプリをインストールしますか？"
-echo ""
-echo "   1) ToDoリスト だけ"
-echo "   2) WBS管理 だけ"
-echo "   3) 両方"
-echo ""
-read -p "番号を入力して Enter (1 / 2 / 3): " choice
-echo ""
+echo "📦 パッケージをインストール中...（数分かかります）"
+npm install
 
-install_app() {
-  local name="$1"; local label="$2"
-  echo "-------------------------------------------"
-  echo "📦 ${label} をインストール中...（数分かかります）"
-  echo "-------------------------------------------"
-  (cd "$ROOT/$name" && npm install)
-  echo "✅ ${label} のインストール完了"
+if [ $? -eq 0 ]; then
   echo ""
-}
-
-case "$choice" in
-  1) install_app "todo-app" "ToDoリスト" ;;
-  2) install_app "wbs-app" "WBS管理" ;;
-  3) install_app "todo-app" "ToDoリスト"; install_app "wbs-app" "WBS管理" ;;
-  *) echo "⚠️ 1・2・3 のいずれかを入力してください。"; read -p "Enterで閉じます..."; exit 1 ;;
-esac
-
-echo "==========================================="
-echo "🎉 インストールが完了しました！"
-echo ""
-echo "起動するには："
-echo "  ・ToDoリスト → ToDo起動.command をダブルクリック"
-echo "  ・WBS管理    → WBS起動.command をダブルクリック"
-echo "==========================================="
+  echo "==========================================="
+  echo "🎉 インストールが完了しました！"
+  echo ""
+  echo "起動するには："
+  echo "  ・ToDoリスト → ToDo起動.command をダブルクリック"
+  echo "  ・WBS管理    → WBS起動.command をダブルクリック"
+  echo "==========================================="
+else
+  echo "❌ インストールに失敗しました"
+  echo "   docs/Mac環境構築手順書.md を確認してください"
+fi
 echo ""
 read -p "Enterキーで閉じます..."

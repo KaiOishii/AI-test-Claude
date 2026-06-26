@@ -1,3 +1,42 @@
+// ── ToDo ──────────────────────────────────────────────
+
+export interface User {
+  id: string
+  email: string
+  name: string
+  created_at: string
+}
+
+export interface Category {
+  id: string
+  name: string
+  user_id: string
+  created_at: string
+}
+
+export type Priority = 'none' | 'low' | 'medium' | 'high'
+export type Recurring = 'none' | 'daily' | 'weekly' | 'monthly'
+
+export interface Todo {
+  id: string
+  title: string
+  memo: string | null
+  completed: boolean
+  user_id: string
+  category_id: string | null
+  due_date: string | null
+  priority: Priority
+  recurring: Recurring
+  sort_order: number
+  parent_id: string | null
+  created_at: string
+  updated_at: string
+  category_name?: string
+  subtasks?: Todo[]
+}
+
+// ── WBS ──────────────────────────────────────────────
+
 export type ProjectStatus = 'active' | 'completed' | 'on_hold' | 'cancelled'
 export type TaskStatus = 'open' | 'in_progress' | 'completed' | 'on_hold' | 'cancelled'
 export type TaskPriority = 'low' | 'medium' | 'high' | 'urgent'
@@ -12,13 +51,6 @@ export const TASK_STATUS_LABEL: Record<TaskStatus, string> = {
 
 export const TASK_PRIORITY_LABEL: Record<TaskPriority, string> = {
   low: '低', medium: '中', high: '高', urgent: '緊急',
-}
-
-export interface User {
-  id: string
-  email: string
-  name: string
-  created_at: string
 }
 
 export interface Project {

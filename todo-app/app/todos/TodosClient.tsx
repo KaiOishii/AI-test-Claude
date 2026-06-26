@@ -8,6 +8,7 @@ import TodoForm from './components/TodoForm'
 import TodoItem from './components/TodoItem'
 import CalendarView from './components/CalendarView'
 import NotificationManager from './components/NotificationManager'
+import QuestLog from './components/QuestLog'
 
 interface Props {
   user: User
@@ -203,6 +204,7 @@ export default function TodosClient({ user, initialTodos, initialCategories }: P
   return (
     <div className={`min-h-screen flex flex-col ${bg} ${fg}`}>
       <NotificationManager todos={todos} />
+      <QuestLog />
 
       {/* Header */}
       <header className={`border-b ${bdr} px-6 py-4 flex items-center justify-between shrink-0`}>

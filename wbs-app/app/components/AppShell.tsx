@@ -3,6 +3,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import type { User } from '@/lib/types'
+import QuestLog from './QuestLog'
 
 interface Props {
   user: User
@@ -28,6 +29,7 @@ export default function AppShell({ user, children }: Props) {
 
   return (
     <div className="min-h-screen flex flex-col md:flex-row bg-white text-gray-900">
+      <QuestLog />
       {/* Mobile header */}
       <header className="md:hidden flex items-center justify-between px-4 py-3 border-b border-gray-200">
         <span className="font-semibold">WBS管理</span>

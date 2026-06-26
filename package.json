@@ -2,11 +2,43 @@
   "name": "task-manager",
   "version": "1.0.0",
   "private": true,
+  "main": "electron/main.js",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "test": "npx playwright test --reporter=list"
+    "test": "npx playwright test --reporter=list",
+    "electron": "electron .",
+    "electron:dev": "concurrently -k \"npm run dev\" \"sleep 8 && electron .\"",
+    "dist": "npm run build && electron-builder",
+    "dist:mac": "npm run build && electron-builder --mac",
+    "dist:win": "npm run build && electron-builder --win"
+  },
+  "build": {
+    "appId": "com.taskmanager.app",
+    "productName": "タスク管理",
+    "directories": {
+      "output": "dist-electron"
+    },
+    "files": [
+      "electron/**/*",
+      ".next/**/*",
+      "public/**/*",
+      "node_modules/**/*",
+      "package.json",
+      "next.config.ts",
+      ".data/**/*"
+    ],
+    "mac": {
+      "category": "public.app-category.productivity",
+      "target": [{ "target": "dmg", "arch": ["arm64", "x64"] }]
+    },
+    "win": {
+      "target": [{ "target": "nsis", "arch": ["x64"] }]
+    },
+    "linux": {
+      "target": [{ "target": "AppImage", "arch": ["x64"] }]
+    }
   },
   "dependencies": {
     "@types/bcryptjs": "^2.4.6",
@@ -26,6 +58,9 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "concurrently": "^9.1.2",
+    "electron": "^35.3.0",
+    "electron-builder": "^25.1.8",
     "tailwindcss": "^4",
     "typescript": "^5"
   }

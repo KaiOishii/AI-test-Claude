@@ -1,7 +1,7 @@
 'use client'
 import Link from 'next/link'
 import type { User, Project, Task } from '@/lib/types'
-import { PROJECT_STATUS_LABEL, TASK_STATUS_LABEL, TASK_PRIORITY_LABEL } from '@/lib/types'
+import { TASK_STATUS_LABEL } from '@/lib/types'
 
 interface Props {
   user: User
@@ -13,104 +13,82 @@ interface Props {
 
 function fmtDate(d: string | null) {
   if (!d) return ''
-  const [y, m, day] = d.split('-')
-  return `${y}/${m}/${day}`
+  const [, m, day] = d.split('-')
+  return `${m}/${day}`
 }
 
 export default function DashboardClient({ user, projects, todayTasks, overdueTasks, today }: Props) {
-  const [y, m, d] = today.split('-')
-  const todayLabel = `${y}年${m}月${d}日`
+  const muted = 'text-[#aaa]'
 
   return (
-    <div className="px-5 md:px-8 py-6 max-w-5xl">
-      <div className="mb-6">
-        <h1 className="text-xl font-semibold">ホーム</h1>
-        <p className="text-sm text-gray-400 mt-0.5">{todayLabel} · {user.name}</p>
+    <div className="px-12 py-10 max-w-3xl">
+      <div className="mb-12">
+        <p className={`text-xs ${muted}`}>{user.name}</p>
       </div>
 
       {/* Today's tasks */}
-      <section className="mb-8">
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="text-sm font-semibold uppercase tracking-wider text-gray-400">今日のタスク</h2>
-          <Link href="/today" className="text-xs text-gray-400 hover:text-black underline">すべて見る</Link>
-        </div>
-        {todayTasks.length === 0 ? (
-          <p className="text-sm text-gray-400 py-4 text-center border border-dashed border-gray-200">
-            今日のタスクはありません
-          </p>
-        ) : (
-          <div className="border border-gray-200 divide-y divide-gray-100">
+      {todayTasks.length > 0 && (
+        <section className="mb-10">
+          <p className={`text-xs ${muted} mb-4`}>today</p>
+          <ul className="space-y-2">
             {todayTasks.map(t => (
-              <div key={t.id} className="flex items-center gap-3 px-4 py-3">
-                <span className={`text-xs border px-1.5 py-0.5 shrink-0 ${
-                  t.status === 'in_progress' ? 'border-blue-400 text-blue-500' : 'border-gray-300 text-gray-400'
-                }`}>{TASK_STATUS_LABEL[t.status]}</span>
-                <span className="flex-1 text-sm truncate">{t.title}</span>
-                <span className="text-xs text-gray-400 shrink-0">{t.project_name}</span>
+              <li key={t.id} className="flex items-center gap-4">
+                <span className={`text-xs ${muted} shrink-0 w-16`}>{TASK_STATUS_LABEL[t.status]}</span>
+                <span className="text-sm flex-1">{t.title}</span>
+                <span className={`text-xs ${muted} shrink-0`}>{t.project_name}</span>
                 {t.due_date && t.due_date < today && (
-                  <span className="text-xs text-red-500 shrink-0">⚠ 期限切れ</span>
+                  <span className="text-xs text-[#c0392b] shrink-0">overdue</span>
                 )}
-              </div>
+              </li>
             ))}
-          </div>
-        )}
-      </section>
-
-      {/* Overdue tasks */}
-      {overdueTasks.length > 0 && (
-        <section className="mb-8">
-          <h2 className="text-sm font-semibold uppercase tracking-wider text-gray-400 mb-3">
-            期限切れ <span className="text-red-500">({overdueTasks.length})</span>
-          </h2>
-          <div className="border border-red-100 divide-y divide-red-50">
-            {overdueTasks.map(t => (
-              <div key={t.id} className="flex items-center gap-3 px-4 py-3 bg-red-50/30">
-                <span className="text-xs text-red-400 shrink-0 font-medium">{fmtDate(t.due_date)}</span>
-                <span className="flex-1 text-sm truncate">{t.title}</span>
-                <span className="text-xs text-gray-400 shrink-0">{t.project_name}</span>
-                <Link href={`/projects/${t.project_id}`}
-                  className="text-xs text-gray-400 hover:text-black underline shrink-0">詳細</Link>
-              </div>
-            ))}
-          </div>
+          </ul>
+          <Link href="/today" className={`text-xs ${muted} hover:opacity-50 mt-3 inline-block transition-opacity`}>all →</Link>
         </section>
       )}
 
-      {/* Active projects */}
+      {/* Overdue */}
+      {overdueTasks.length > 0 && (
+        <section className="mb-10">
+          <p className="text-xs text-[#c0392b] mb-4">overdue {overdueTasks.length}</p>
+          <ul className="space-y-2">
+            {overdueTasks.map(t => (
+              <li key={t.id} className="flex items-center gap-4">
+                <span className={`text-xs ${muted} shrink-0 w-16`}>{fmtDate(t.due_date)}</span>
+                <span className="text-sm flex-1">{t.title}</span>
+                <Link href={`/projects/${t.project_id}`} className={`text-xs ${muted} hover:opacity-50 shrink-0 transition-opacity`}>{t.project_name}</Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {/* Projects */}
       <section>
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="text-sm font-semibold uppercase tracking-wider text-gray-400">進行中のプロジェクト</h2>
-          <Link href="/projects" className="text-xs text-gray-400 hover:text-black underline">すべて見る</Link>
+        <div className="flex items-center justify-between mb-4">
+          <p className={`text-xs ${muted}`}>projects</p>
+          <Link href="/projects" className={`text-xs ${muted} hover:opacity-50 transition-opacity`}>all →</Link>
         </div>
         {projects.length === 0 ? (
-          <div className="text-center py-8 border border-dashed border-gray-200">
-            <p className="text-sm text-gray-400 mb-3">プロジェクトがありません</p>
-            <Link href="/projects" className="text-sm underline">プロジェクトを作成する</Link>
-          </div>
+          <Link href="/projects" className={`text-xs ${muted} hover:opacity-50 transition-opacity`}>+ new project</Link>
         ) : (
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          <ul className="space-y-3">
             {projects.map(p => (
-              <Link key={p.id} href={`/projects/${p.id}`}
-                className="block border border-gray-200 p-4 hover:border-black transition-colors">
-                <div className="flex items-start justify-between gap-2 mb-2">
-                  <h3 className="text-sm font-medium truncate">{p.name}</h3>
-                  <span className="text-xs text-gray-400 shrink-0">{PROJECT_STATUS_LABEL[p.status]}</span>
-                </div>
-                {p.due_date && (
-                  <p className="text-xs text-gray-400 mb-2">{fmtDate(p.due_date)} 締切</p>
-                )}
-                <div className="flex items-center gap-2">
-                  <div className="flex-1 bg-gray-100 h-1">
-                    <div className="bg-black h-1 transition-all" style={{ width: `${p.progress}%` }} />
+              <li key={p.id}>
+                <Link href={`/projects/${p.id}`} className="flex items-center gap-4 group">
+                  <div className="flex-1 min-w-0">
+                    <span className="text-sm group-hover:opacity-60 transition-opacity">{p.name}</span>
                   </div>
-                  <span className="text-xs text-gray-400">{p.progress}%</span>
-                </div>
-                <p className="text-xs text-gray-400 mt-1.5">
-                  {p.completed_task_count ?? 0}/{p.task_count ?? 0} タスク完了
-                </p>
-              </Link>
+                  <div className="flex items-center gap-3 shrink-0">
+                    <div className="w-20 bg-[#e5e5e5] h-px">
+                      <div className="bg-[#111] h-px transition-all" style={{ width: `${p.progress}%` }} />
+                    </div>
+                    <span className={`text-xs ${muted} w-8 text-right`}>{p.progress}%</span>
+                  </div>
+                  {p.due_date && <span className={`text-xs ${muted} shrink-0`}>{fmtDate(p.due_date)}</span>}
+                </Link>
+              </li>
             ))}
-          </div>
+          </ul>
         )}
       </section>
     </div>

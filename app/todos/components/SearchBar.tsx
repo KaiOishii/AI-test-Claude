@@ -9,24 +9,20 @@ interface Props {
 export default function SearchBar({ value, onChange, dark }: Props) {
   return (
     <div className="relative mb-4">
-      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm select-none">🔍</span>
       <input
         type="text"
         value={value}
         onChange={e => onChange(e.target.value)}
         placeholder="タスクを検索..."
-        className={`w-full border pl-9 pr-3 py-2 text-sm outline-none focus:ring-1 ${
+        className={`w-full bg-transparent border-b pb-1.5 text-xs outline-none transition-colors ${
           dark
-            ? 'bg-gray-800 border-gray-600 text-white placeholder-gray-500 focus:ring-gray-400'
-            : 'bg-white border-black text-black placeholder-gray-400 focus:ring-black'
+            ? 'border-[#333] text-[#eee] placeholder-[#555] focus:border-[#666]'
+            : 'border-[#e0e0e0] text-[#111] placeholder-[#bbb] focus:border-[#aaa]'
         }`}
       />
       {value && (
-        <button
-          onClick={() => onChange('')}
-          className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-current text-sm"
-        >
-          ✕
+        <button onClick={() => onChange('')} className={`absolute right-0 top-0 text-xs ${dark ? 'text-[#555]' : 'text-[#bbb]'} hover:opacity-50`}>
+          ×
         </button>
       )}
     </div>

@@ -3,7 +3,6 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import type { User } from '@/lib/types'
-import QuestLog from './QuestLog'
 
 interface Props {
   user: User
@@ -11,9 +10,9 @@ interface Props {
 }
 
 const NAV = [
-  { href: '/dashboard', label: 'ホーム',       icon: '⊞' },
-  { href: '/projects',  label: 'プロジェクト', icon: '□' },
-  { href: '/today',     label: '今日のタスク', icon: '◈' },
+  { href: '/dashboard', label: 'home' },
+  { href: '/projects',  label: 'projects' },
+  { href: '/today',     label: 'today' },
 ]
 
 export default function AppShell({ user, children }: Props) {
@@ -28,50 +27,41 @@ export default function AppShell({ user, children }: Props) {
   }
 
   return (
-    <div className="min-h-screen flex flex-col md:flex-row bg-white text-gray-900">
-      <QuestLog />
+    <div className="min-h-screen flex flex-col md:flex-row bg-[#f5f5f4] text-[#111]">
       {/* Mobile header */}
-      <header className="md:hidden flex items-center justify-between px-4 py-3 border-b border-gray-200">
-        <span className="font-semibold">WBS管理</span>
-        <button onClick={() => setMenuOpen(v => !v)} className="text-gray-500 text-xl">☰</button>
+      <header className="md:hidden flex items-center justify-between px-6 py-4">
+        <span className="text-xs tracking-widest uppercase text-[#999]">wbs</span>
+        <button onClick={() => setMenuOpen(v => !v)} className="text-xs text-[#aaa]">menu</button>
       </header>
 
-      {/* Mobile menu overlay */}
-      {menuOpen && (
-        <div className="md:hidden fixed inset-0 z-40 bg-black/30" onClick={() => setMenuOpen(false)} />
-      )}
+      {menuOpen && <div className="md:hidden fixed inset-0 z-40 bg-black/10" onClick={() => setMenuOpen(false)} />}
 
       {/* Sidebar */}
       <aside className={`
-        fixed top-0 left-0 z-50 h-full w-56 bg-white border-r border-gray-200 flex flex-col
+        fixed top-0 left-0 z-50 h-full w-40 bg-[#f5f5f4] flex flex-col px-8 py-8
         transform transition-transform duration-200
         ${menuOpen ? 'translate-x-0' : '-translate-x-full'}
         md:static md:translate-x-0
       `}>
-        <div className="px-5 py-5 border-b border-gray-100">
-          <p className="font-semibold text-base">WBS管理</p>
-          <p className="text-xs text-gray-400 mt-0.5 truncate">{user.name}</p>
-        </div>
+        <p className="text-xs tracking-widest uppercase text-[#999] mb-8">wbs</p>
 
-        <nav className="flex-1 py-3 space-y-0.5 overflow-y-auto">
+        <nav className="flex-1 space-y-1.5">
           {NAV.map(n => {
             const active = pathname === n.href || (n.href !== '/dashboard' && pathname.startsWith(n.href))
             return (
               <Link key={n.href} href={n.href}
                 onClick={() => setMenuOpen(false)}
-                className={`flex items-center gap-3 px-5 py-2.5 text-sm transition-colors ${
-                  active ? 'bg-black text-white' : 'text-gray-600 hover:bg-gray-50'
-                }`}>
-                <span className="w-4 text-center">{n.icon}</span>
+                className={`block text-xs transition-opacity py-0.5 ${active ? 'opacity-100' : 'text-[#aaa] hover:opacity-60'}`}>
                 {n.label}
               </Link>
             )
           })}
         </nav>
 
-        <div className="px-5 py-4 border-t border-gray-100">
-          <button onClick={logout} className="text-sm text-gray-400 hover:text-black transition-colors">
-            ログアウト
+        <div className="space-y-2">
+          <p className="text-xs text-[#bbb]">{user.name}</p>
+          <button onClick={logout} className="text-xs text-[#bbb] hover:opacity-50 transition-opacity">
+            out
           </button>
         </div>
       </aside>

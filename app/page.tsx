@@ -7,31 +7,16 @@ export default async function Home() {
   if (!session) redirect('/login')
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center px-4">
-      <h1 className="text-3xl font-semibold mb-2 tracking-tight">タスク管理</h1>
-      <p className="text-sm text-gray-400 mb-10">使いたいアプリを選んでください</p>
-      <div className="flex flex-col sm:flex-row gap-4 w-full max-w-md">
-        <Link
-          href="/todos"
-          className="flex-1 border border-black px-6 py-8 text-center hover:bg-black hover:text-white transition-colors group"
-        >
-          <div className="text-3xl mb-3">☑</div>
-          <div className="font-semibold text-lg mb-1">ToDo リスト</div>
-          <div className="text-xs text-gray-400 group-hover:text-gray-300">
-            日々のタスクをシンプルに管理
-          </div>
+    <div className="min-h-screen flex flex-col items-center justify-center">
+      <p className="text-xs text-[#999] mb-16 tracking-widest uppercase">task manager</p>
+      <nav className="flex gap-16">
+        <Link href="/todos" className="text-sm hover:opacity-50 transition-opacity">
+          todo
         </Link>
-        <Link
-          href="/dashboard"
-          className="flex-1 border border-black px-6 py-8 text-center hover:bg-black hover:text-white transition-colors group"
-        >
-          <div className="text-3xl mb-3">□</div>
-          <div className="font-semibold text-lg mb-1">WBS 管理</div>
-          <div className="text-xs text-gray-400 group-hover:text-gray-300">
-            プロジェクト・工数・進捗を管理
-          </div>
+        <Link href="/dashboard" className="text-sm hover:opacity-50 transition-opacity">
+          wbs
         </Link>
-      </div>
+      </nav>
     </div>
   )
 }
